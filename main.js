@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+import {PointerLockControls} from "three/addons/controls/PointerLockControls.js";
 
 function init() {
     var settings = {
@@ -152,6 +153,8 @@ function init() {
 
     var gameState = {};
     var players = [];
+    var localPlayer;
+    var localPlayerRep;
 
     socket.on("gs", (gs) => {
         gameState = gs;
@@ -161,9 +164,17 @@ function init() {
         players = [];
         gs.players.forEach((ply) => {
             let p = player(ply.position, ply.rotation);
+            if (ply.id == socket.id) {
+                localPlayer = ply;
+                localPlayerRep = p;
+            }
             scene.add(p);
             players.push(p);
         });
+        if (localPlayer) {
+            localPlayerRep.add(camera);
+            camera.position.y = 1.5;
+        }
     });
 
     amb(0x404040);
@@ -171,10 +182,6 @@ function init() {
     light(0, 5, 2.5);
 
     const gnd = cube(0, 0, 0, 40, 1, 40);
-
-    camera.position.z = 20;
-    camera.position.y = 3;
-    const controls = new OrbitControls(camera, renderer.domElement);
 
     function animate() {
         requestAnimationFrame(animate);
