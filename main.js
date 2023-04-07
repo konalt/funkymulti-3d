@@ -125,14 +125,27 @@ function init() {
             0.1,
             5000
         );
+        const vmcamera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            100
+        );
+        vmcamera.layers.set(1);
 
         /* const camerahelper = new THREE.CameraHelper(camera);
         scene.add(camerahelper); */
+        camera.add(vmcamera);
 
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        return [scene, camera, renderer, camera2];
+        const vmrenderer = new THREE.WebGLRenderer();
+        vmrenderer.setSize(window.innerWidth, window.innerHeight);
+        vmrenderer.domElement.id = "vmrend";
+        document.body.appendChild(vmrenderer.domElement);
+        vmrenderer.setClearAlpha(0);
+        return [scene, camera, renderer, camera2, vmcamera, vmrenderer];
     }
 
     function player(pos, quat, invisible, actionName = "ref") {
@@ -246,7 +259,35 @@ function init() {
         return g;
     }
 
-    const [scene, camera, renderer, camera2] = base();
+    function localhands() {
+        const leftHand = new THREE.Mesh(
+            new THREE.SphereGeometry(0.18, 32, 32),
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+            })
+        );
+        leftHand.position.x = 0.6;
+        leftHand.position.y = -0.4;
+        leftHand.position.z = -1;
+        leftHand.layers.set(1);
+
+        const rightHand = new THREE.Mesh(
+            new THREE.SphereGeometry(0.18, 32, 32),
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+            })
+        );
+        rightHand.position.x = -0.6;
+        rightHand.position.y = -0.4;
+        rightHand.position.z = -1;
+        rightHand.layers.set(1);
+        const l = light(0, 1, 0);
+        l.layers.set(1);
+        vmcamera.add(l);
+        return [leftHand, rightHand];
+    }
+
+    const [scene, camera, renderer, camera2, vmcamera, vmrenderer] = base();
 
     camera2.position.z = 5;
     camera2.position.y = 2;
@@ -270,7 +311,7 @@ function init() {
             let p = player(
                 ply.position,
                 ply.rotation,
-                ply.id == socket.id && !debug,
+                ply.id == socket.id,
                 ply.action
             );
             if (!p) return;
@@ -324,12 +365,25 @@ function init() {
             hk.push(k.code.toLowerCase());
         }
     };
-
     document.onkeyup = function (k) {
         k.preventDefault();
         jr.push(k.code.toLowerCase());
         hk = hk.filter((hk) => {
             return hk != k.code.toLowerCase();
+        });
+    };
+    document.onmousedown = function (e) {
+        e.preventDefault();
+        if (e.button == 0) {
+            jp.push("mouse1");
+            if (!hk.includes("mouse1")) hk.push("mouse1");
+        }
+    };
+    document.onmouseup = function (e) {
+        e.preventDefault();
+        jr.push("mouse1");
+        hk = hk.filter((hk1) => {
+            return hk1 != "mouse1";
         });
     };
 
@@ -354,6 +408,10 @@ function init() {
 
     const gnd = cube(0, 0, 0, 40, 1, 40);
 
+    const [leftHand, rightHand] = localhands();
+    vmcamera.add(leftHand);
+    vmcamera.add(rightHand);
+
     var lastmovestring = "";
     function animate() {
         requestAnimationFrame(animate);
@@ -369,6 +427,7 @@ function init() {
         }
 
         renderer.render(scene, debug ? camera2 : camera);
+        vmrenderer.render(scene, vmcamera);
         stats.update();
         jp = [];
         jr = [];
@@ -392,6 +451,11 @@ function init() {
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, window.innerHeight);
+
+        vmcamera.aspect = window.innerWidth / window.innerHeight;
+        vmcamera.updateProjectionMatrix();
+
+        vmrenderer.setSize(window.innerWidth, window.innerHeight);
     }
     window.addEventListener("resize", onWindowResize);
 
