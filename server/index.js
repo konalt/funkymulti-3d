@@ -1,5 +1,4 @@
 const {Server} = require("socket.io");
-const io = new Server(server);
 const app = require("express")();
 const https = require("https");
 const fs = require("fs");
@@ -16,8 +15,12 @@ var options = {
 };
 
 var server = https.createServer(options, app);
-server.listen(43958, () => {
-    console.log("Listening!");
+
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+    },
 });
 
 io.on("connection", (socket) => {
@@ -25,4 +28,8 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         console.log("<= " + socket.id);
     });
+});
+
+server.listen(43958, () => {
+    console.log("Listening!");
 });
