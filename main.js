@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 
 var rigidBodies = [],
     tmpTrans;
@@ -244,6 +245,10 @@ function physSetup() {
 
 Ammo().then(start); */
 function start() {
-    physSetup();
+    //physSetup();
     init();
 }
+
+const socket = io("https://konalt.us.to:43958");
+
+start();
