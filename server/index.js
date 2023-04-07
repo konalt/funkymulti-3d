@@ -32,6 +32,16 @@ function encodePlayerData(plyd) {
     });
     return o.trim();
 }
+function encodeBulletData(buld) {
+    var o = "";
+    buld.forEach((bul) => {
+        o += [[ply.position.x, ply.position.y, ply.position.z].join(",")].join(
+            ":"
+        );
+        o += "\n";
+    });
+    return o.trim();
+}
 
 function roundToPlaces(value, decimals = 5) {
     return Math.round(value * (10 ^ decimals)) / (10 ^ decimals);
@@ -45,6 +55,7 @@ class ServerScene {
         this.create();
         this.state = {
             players: [],
+            bullets: [],
         };
     }
     init() {
@@ -71,6 +82,56 @@ class ServerScene {
                 if (str[6] == "1") vert--;
                 if (str[7] == "1") horz--;
                 ply.look = [horz, vert];
+            });
+            socket.on("shoot", () => {
+                console.log("bangbangbang");
+                const physObject = this.physics.add.sphere({
+                    name: "Bullet_" + ply.id,
+                    mass: 0,
+                    radius: 0.2,
+                    x: ply.position.x,
+                    y: ply.position.y + 1.6,
+                    z: ply.position.z,
+                });
+                let bul = {
+                    owner: ply.id,
+                    position: {
+                        x: ply.position.x,
+                        y: ply.position.y + 1.6,
+                        z: ply.position.z,
+                    },
+                    rotation: {
+                        x: 0,
+                        y: 0,
+                        z: 0,
+                        w: 0,
+                    },
+                    physics: physObject,
+                };
+                bul.physics.setRotationFromEuler(
+                    new THREE.Euler(
+                        (ply.cameraAngle * Math.PI) / 180,
+                        (ply.cameraAngle2 * Math.PI) / 180,
+                        0
+                    )
+                );
+                _v1.copy(new THREE.Vector3(0, 0, 1)).applyQuaternion(
+                    bul.physics.quaternion
+                );
+                _v2.copy(new THREE.Vector3(0, 1, 0)).applyQuaternion(
+                    bul.physics.quaternion
+                );
+                _v3.copy(new THREE.Vector3(1, 0, 0)).applyQuaternion(
+                    bul.physics.quaternion
+                );
+                bul.physics.body.ammo.setLinearVelocity(
+                    // is there a better way to do this?
+                    new Ammo.btVector3(
+                        _v1.x + _v2.x + _v3.x,
+                        _v1.y + _v2.y + _v3.y,
+                        _v1.z + _v2.z + _v3.z
+                    ).op_mul(0)
+                );
             });
             socket.on("mouse", ([mouseX, mouseY]) => {
                 ply.cameraAngle += (mouseY / 20) * sens;
@@ -182,13 +243,24 @@ class ServerScene {
                 ).op_mul(10)
             );
         }
+        for (const bul of this.state.bullets) {
+            bul.position.x = roundToPlaces(bul.physics.position.x, 7);
+            bul.position.y = roundToPlaces(bul.physics.position.y, 7);
+            bul.position.z = roundToPlaces(bul.physics.position.z, 7);
+            bul.rotation.x = roundToPlaces(bul.physics.quaternion.x);
+            bul.rotation.y = roundToPlaces(bul.physics.quaternion.y);
+            bul.rotation.z = roundToPlaces(bul.physics.quaternion.z);
+            bul.rotation.w = roundToPlaces(bul.physics.quaternion.w);
+        }
 
+        io.emit("buld", encodeBulletData(this.state.bullets));
         io.emit("plyd", encodePlayerData(this.state.players));
     }
 }
 
 let _v1 = new THREE.Vector3();
 let _v2 = new THREE.Vector3();
+let _v3 = new THREE.Vector3();
 let io;
 
 _ammoInitalizerFunc().then((ammo) => {

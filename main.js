@@ -71,6 +71,14 @@ function parsePlayerData(plyd) {
     });
     return o;
 }
+function parseBulletData(plyd) {
+    let o = [];
+    let keys = [["position", "vec3"]];
+    plyd.split("\n").forEach((ply) => {
+        o.push(dataToObject(ply, keys));
+    });
+    return o;
+}
 
 function init() {
     var settings = {
@@ -103,6 +111,17 @@ function init() {
         const c = new THREE.Mesh(
             new THREE.BoxGeometry(w, h, d),
             new THREE.MeshStandardMaterial({color: color})
+        );
+        c.x = x;
+        c.y = y;
+        c.z = z;
+        scene.add(c);
+        return c;
+    }
+    function bullet(x, y, z) {
+        const c = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 8, 8),
+            new THREE.MeshBasicMaterial({color: 0xffffff})
         );
         c.x = x;
         c.y = y;
@@ -299,6 +318,7 @@ function init() {
 
     var gameState = {};
     var players = [];
+    var bullets = [];
     var localPlayer;
     var localPlayerRep;
 
@@ -337,6 +357,15 @@ function init() {
                 )
             );
         }
+    }
+    function reloadBullets() {
+        bullets.forEach((plytr) => {
+            scene.remove(plytr);
+        });
+        bullets = [];
+        gameState.bullets.forEach((ply) => {
+            bullet(ply.position.x, ply.position.y, ply.position.z);
+        });
     }
 
     var hk = [],
@@ -401,6 +430,11 @@ function init() {
         gameState.players = parsed;
         reloadPlayers();
     });
+    socket.on("buld", (plyd) => {
+        let parsed = parseBulletData(plyd);
+        gameState.bullets = parsed;
+        reloadBullets();
+    });
 
     amb(0x404040);
     light(0, 5, -2.5);
@@ -424,6 +458,9 @@ function init() {
         if (lastmovestring != movestring) {
             lastmovestring = movestring;
             socket.emit("move", movestring);
+        }
+        if (getKeyDown("mouse1")) {
+            //socket.emit("shoot");
         }
 
         renderer.render(scene, debug ? camera2 : camera);
