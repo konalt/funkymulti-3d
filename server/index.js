@@ -14,7 +14,12 @@ function encodePlayerData(plyd) {
             ply.name,
             ply.id,
             [ply.position.x, ply.position.y, ply.position.z].join(","),
-            [ply.rotation.x, ply.rotation.y, ply.rotation.z].join(","),
+            [
+                ply.rotation.x,
+                ply.rotation.y,
+                ply.rotation.z,
+                ply.rotation.w,
+            ].join(","),
             ply.move.join(","),
             ply.look.join(","),
             "null",
