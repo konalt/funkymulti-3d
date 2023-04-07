@@ -26,6 +26,7 @@ function encodePlayerData(plyd) {
             [ply.offset.x, ply.offset.y, ply.offset.z].join(","),
             ply.cameraAngle,
             ply.cameraAngle2,
+            ply.action,
         ].join(":");
         o += "\n";
     });
@@ -98,7 +99,7 @@ class ServerScene {
             name: "Player_" + name,
             mass: 1,
             x: 0,
-            y: 10,
+            y: 2,
             z: 0,
         });
         let ply = {
@@ -106,7 +107,7 @@ class ServerScene {
             id: name,
             position: {
                 x: 0,
-                y: 10,
+                y: 2,
                 z: 0,
             },
             rotation: {
@@ -121,6 +122,8 @@ class ServerScene {
             offset: {x: 0, y: 0.5, z: 0},
             cameraAngle: 0,
             cameraAngle2: 0,
+            action: "idle",
+            time: Date.now(),
         };
         this.state.players.push(ply);
         io.emit("plyd", encodePlayerData(this.state.players));

@@ -64,6 +64,7 @@ function parsePlayerData(plyd) {
         ["offset", "vec3"],
         ["cameraAngle", "flt"],
         ["cameraAngle2", "flt"],
+        ["action", "string"],
     ];
     plyd.split("\n").forEach((ply) => {
         o.push(dataToObject(ply, keys));
@@ -269,7 +270,8 @@ function init() {
             let p = player(
                 ply.position,
                 ply.rotation,
-                ply.id == socket.id && !debug
+                ply.id == socket.id && !debug,
+                ply.action
             );
             if (!p) return;
             if (ply.id == socket.id) {
