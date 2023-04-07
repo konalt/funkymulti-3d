@@ -35,17 +35,22 @@ function cube(x, y, z, w = 1, h = 1, d = 1, color = 0xeeeeee) {
     return c;
 }
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-);
+function base() {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    return [scene, camera, renderer];
+}
+
+const [scene, camera, renderer] = base();
 
 amb(0x404040);
 cube(0, -0.2, 0, 20, 0.4, 20);
