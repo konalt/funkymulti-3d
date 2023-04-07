@@ -42,18 +42,15 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const spinnycube = cube(0, 0, 0);
+cube(0, -0.2, 0, 20, 0.4, 20);
 light(-2.5, 2.5, 2.5);
-light(2.5, 0, -2.5);
+light(2.5, 2.5, -2.5);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 camera.position.z = 5;
 
 function animate() {
     requestAnimationFrame(animate);
-    spinnycube.rotation.y += 0.05;
-    spinnycube.rotation.x += 0.025;
-    spinnycube.rotation.z += 0.025;
     renderer.render(scene, camera);
 }
 animate();
