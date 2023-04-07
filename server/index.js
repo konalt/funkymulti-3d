@@ -253,9 +253,16 @@ class ServerScene {
             bul.rotation.w = roundToPlaces(bul.physics.quaternion.w);
         }
 
-        io.emit("buld", encodeBulletData(this.state.bullets));
-        io.emit("plyd", encodePlayerData(this.state.players));
+        cachedEmit("buld", encodeBulletData(this.state.bullets));
+        cachedEmit("plyd", encodePlayerData(this.state.players));
     }
+}
+
+var lastDatas = {};
+function cachedEmit(name, text) {
+    if (lastDatas[name] == text) return;
+    lastDatas[name] = text;
+    io.emit(name, text);
 }
 
 let _v1 = new THREE.Vector3();
