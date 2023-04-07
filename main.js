@@ -50,11 +50,20 @@ function init() {
             0.1,
             1000
         );
+        const camera2 = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            5000
+        );
+
+        const camerahelper = new THREE.CameraHelper(camera);
+        scene.add(camerahelper);
 
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        return [scene, camera, renderer];
+        return [scene, camera, renderer, camera2];
     }
 
     function player(pos, quat) {
@@ -147,7 +156,11 @@ function init() {
         return g;
     }
 
-    const [scene, camera, renderer] = base();
+    const [scene, camera, renderer, camera2] = base();
+
+    camera2.position.z = 5;
+    camera2.position.y = 2;
+    new OrbitControls(camera2, renderer.domElement);
 
     const socket = io("https://konalt.us.to:43958");
 
@@ -174,6 +187,7 @@ function init() {
         if (localPlayer) {
             localPlayerRep.add(camera);
             camera.position.y = 1.5;
+            camera.rotation.y = Math.PI;
         }
     });
 
@@ -185,7 +199,7 @@ function init() {
 
     function animate() {
         requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+        renderer.render(scene, camera2);
     }
     animate();
 }
