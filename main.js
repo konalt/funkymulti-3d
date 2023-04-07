@@ -187,14 +187,14 @@ function init(params) {
     light(0, 5, 2.5);
 
     const ply = player(0, 5, 0);
-    physbox(ply, new Ammo.btVector3(1, 1, 1), new THREE.Vector3(0, 1, 0), 1);
+    //physbox(ply, new Ammo.btVector3(1, 1, 1), new THREE.Vector3(0, 1, 0), 1);
     const gnd = cube(0, -0.2, 0, 40, 0.4, 40);
-    physbox(
+    /* physbox(
         gnd,
         new Ammo.btVector3(40, 0.4, 40),
         new THREE.Vector3(0, 0, 0),
         0
-    );
+    ); */
 
     camera.position.z = 20;
     camera.position.y = 3;
@@ -202,7 +202,7 @@ function init(params) {
 
     function animate() {
         requestAnimationFrame(animate);
-        physicsWorld.stepSimulation(clock.getDelta(), 10);
+        /* physicsWorld.stepSimulation(clock.getDelta(), 10);
         for (let i = 0; i < rigidBodies.length; i++) {
             let objThree = rigidBodies[i];
             let objAmmo = objThree.userData.physicsBody;
@@ -219,7 +219,7 @@ function init(params) {
                 );
                 objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
             }
-        }
+        } */
         renderer.render(scene, camera);
     }
     animate();
