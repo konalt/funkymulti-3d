@@ -7,7 +7,7 @@ import Stats from "./libs/stats.min";
 const stats = new Stats();
 document.body.appendChild(stats.domElement);
 
-var debug = true;
+var debug = new URLSearchParams(window.location.search).get("debug") === "1";
 
 var actions = {};
 
