@@ -82,7 +82,7 @@ class ServerScene {
         });
 
         const clock = new ServerClock();
-        clock.disableHighAccuracy();
+        //clock.disableHighAccuracy();
         clock.onTick((delta) => this.update(delta));
     }
     addPlayer(name) {
