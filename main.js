@@ -11,6 +11,36 @@ var debug = new URLSearchParams(window.location.search).get("debug") === "1";
 
 var actions = {};
 
+const ft = new THREE.TextureLoader().load("public/galaxy_ft.tga.jpg");
+const bk = new THREE.TextureLoader().load("public/galaxy_bk.tga.jpg");
+const up = new THREE.TextureLoader().load("public/galaxy_up.tga.jpg");
+const dn = new THREE.TextureLoader().load("public/galaxy_dn.tga.jpg");
+const rt = new THREE.TextureLoader().load("public/galaxy_rt.tga.jpg");
+const lf = new THREE.TextureLoader().load("public/galaxy_lf.tga.jpg");
+
+function createPathStrings(filename) {
+    const basePath = "./public/";
+    const baseFilename = basePath + filename;
+    const fileType = ".tga.jpg";
+    const sides = ["ft", "bk", "up", "dn", "rt", "lf"];
+    const pathStrings = sides.map((side) => {
+        return baseFilename + "_" + side + fileType;
+    });
+    return pathStrings;
+}
+
+function createMaterialArray(filename) {
+    const skyboxImagepaths = createPathStrings(filename);
+    const materialArray = skyboxImagepaths.map((image) => {
+        let texture = new THREE.TextureLoader().load(image);
+        return new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.BackSide,
+        });
+    });
+    return materialArray;
+}
+
 function dataToObject(data, keys) {
     let pd = data.split(":");
     let object = {};
@@ -82,7 +112,7 @@ function parseBulletData(plyd) {
 
 function init() {
     var settings = {
-        EnableLightHelper: true,
+        EnableLightHelper: false,
         EnablePlayerHitboxHelper: false,
         PlayerEyeGap: 0.3,
         PlayerFootGap: 0.5,
@@ -136,7 +166,7 @@ function init() {
             90,
             window.innerWidth / window.innerHeight,
             0.1,
-            1000
+            5000
         );
         const camera2 = new THREE.PerspectiveCamera(
             75,
@@ -439,6 +469,12 @@ function init() {
     amb(0x404040);
     light(0, 5, -2.5);
     light(0, 5, 2.5);
+
+    const sky = new THREE.Mesh(
+        new THREE.BoxGeometry(2000, 2000, 2000),
+        createMaterialArray("galaxy")
+    );
+    scene.add(sky);
 
     const gnd = cube(0, 0, 0, 40, 1, 40);
 
