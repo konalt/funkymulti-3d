@@ -117,9 +117,6 @@ class ServerScene {
                     _v1.z * ply.move[1] + _v2.z * ply.move[0]
                 ).op_mul(10)
             );
-            ply.physics.body.ammo.setAngularVelocity(
-                new Ammo.btVector3(0, ply.look[1] * 5, 0)
-            );
         }
 
         io.emit("gs", this.state);
