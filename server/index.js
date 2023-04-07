@@ -19,7 +19,16 @@ class ServerScene {
 
         io.on("connection", (socket) => {
             socket.emit("gs", this.state);
-            this.addPlayer(socket.id);
+            let ply = this.addPlayer(socket.id);
+            socket.on("move", (str) => {
+                let horz = 0;
+                let vert = 0;
+                if (str[0] == "1") vert++;
+                if (str[1] == "1") horz++;
+                if (str[2] == "1") vert--;
+                if (str[3] == "1") horz--;
+                ply.move = [horz, vert];
+            });
             socket.on("disconnect", () => {
                 this.removePlayer(socket.id);
             });
@@ -60,11 +69,13 @@ class ServerScene {
                 z: 0,
                 w: 0,
             },
+            move: [0, 0],
             physics: physObject,
             offset: {x: 0, y: 0.5, z: 0},
         };
         this.state.players.push(ply);
         io.emit("gs", this.state);
+        return ply;
     }
     removePlayer(name) {
         let p = this.state.players.find((p) => p.id == name);
@@ -83,6 +94,13 @@ class ServerScene {
             ply.rotation.y = ply.physics.quaternion.y;
             ply.rotation.z = ply.physics.quaternion.z;
             ply.rotation.w = ply.physics.quaternion.w;
+            ply.physics.body.ammo.setLinearVelocity(
+                new Ammo.btVector3(
+                    ply.move[0],
+                    ply.physics.body.ammo.getLinearVelocity().y() / 8,
+                    ply.move[1]
+                ).op_mul(8)
+            );
         }
 
         io.emit("gs", this.state);

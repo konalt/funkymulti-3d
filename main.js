@@ -169,6 +169,43 @@ function init() {
     var localPlayer;
     var localPlayerRep;
 
+    var hk = [],
+        jp = [],
+        jr = [],
+        tk = [];
+
+    function getKey(key) {
+        return hk.includes(key.toLowerCase());
+    }
+
+    function getKeyDown(key) {
+        return jp.includes(key.toLowerCase());
+    }
+
+    function getKeyUp(key) {
+        return jr.includes(key.toLowerCase());
+    }
+
+    document.onkeydown = function (k) {
+        if (k.key != "F5" && k.key != "F12" && k.key != "F11")
+            k.preventDefault();
+        tk.push(k.key);
+        if (!hk.includes(k.code.toLowerCase())) {
+            jp.push(k.code.toLowerCase());
+            hk.push(k.code.toLowerCase());
+        }
+    };
+
+    document.onkeyup = function (k) {
+        k.preventDefault();
+        jr.push(k.code.toLowerCase());
+        hk = hk.filter((hk) => {
+            return hk != k.code.toLowerCase();
+        });
+    };
+
+    document.body;
+
     socket.on("gs", (gs) => {
         gameState = gs;
         players.forEach((plytr) => {
@@ -197,9 +234,23 @@ function init() {
 
     const gnd = cube(0, 0, 0, 40, 1, 40);
 
+    var lastmovestring = "";
     function animate() {
         requestAnimationFrame(animate);
+        var movestring = "";
+        var bts = (b) => (b ? "1" : "0");
+        movestring += bts(getKey("keyw"));
+        movestring += bts(getKey("keya"));
+        movestring += bts(getKey("keys"));
+        movestring += bts(getKey("keyd"));
+        if (lastmovestring != movestring) {
+            lastmovestring = movestring;
+            socket.emit("move", movestring);
+        }
+
         renderer.render(scene, camera2);
+        jp = [];
+        jr = [];
     }
     animate();
 }
