@@ -5,6 +5,11 @@ var settings = {
     EnableLightHelper: true,
 };
 
+function amb(color) {
+    const a = new THREE.AmbientLight(color);
+    scene.add(a);
+}
+
 function light(x, y, z) {
     const l = new THREE.PointLight(0xfffffff, 1, 10, 1);
     l.position.x = x;
@@ -42,6 +47,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+amb(0x404040);
 cube(0, -0.2, 0, 20, 0.4, 20);
 light(-2.5, 2.5, 2.5);
 light(2.5, 2.5, -2.5);
