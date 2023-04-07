@@ -57,8 +57,9 @@ cube(0, -0.2, 0, 20, 0.4, 20);
 light(-2.5, 2.5, 2.5);
 light(2.5, 2.5, -2.5);
 
-const controls = new OrbitControls(camera, renderer.domElement);
 camera.position.z = 5;
+camera.position.y = 2.5;
+const controls = new OrbitControls(camera, renderer.domElement);
 
 function animate() {
     requestAnimationFrame(animate);
