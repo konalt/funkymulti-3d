@@ -9,6 +9,8 @@ document.body.appendChild(stats.domElement);
 
 var debug = true;
 
+var actions = {};
+
 function dataToObject(data, keys) {
     let pd = data.split(":");
     let object = {};
@@ -132,7 +134,10 @@ function init() {
         return [scene, camera, renderer, camera2];
     }
 
-    function player(pos, quat, invisible) {
+    function player(pos, quat, invisible, actionName = "ref") {
+        if (!actions.player) return;
+        var action = actions.player[actionName];
+        if (!action) return console.warn("Invalid action " + actionName);
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 32, 32),
             new THREE.MeshStandardMaterial({
@@ -197,8 +202,10 @@ function init() {
                 visible: !invisible,
             })
         );
-        leftHand.position.y = 1.6;
-        leftHand.position.x = settings.PlayerHandGap;
+        leftHand.position.x = action[0][0];
+        leftHand.position.y = action[0][1];
+        leftHand.position.z = action[0][2];
+
         const rightHand = new THREE.Mesh(
             new THREE.SphereGeometry(0.25, 32, 32),
             new THREE.MeshStandardMaterial({
@@ -206,8 +213,9 @@ function init() {
                 visible: !invisible,
             })
         );
-        rightHand.position.y = 1.6;
-        rightHand.position.x = -settings.PlayerHandGap;
+        rightHand.position.x = action[1][0];
+        rightHand.position.y = action[1][1];
+        rightHand.position.z = action[1][2];
         sphere.add(leftEye);
         sphere.add(rightEye);
         sphere.position.y = 1.5;
@@ -258,7 +266,12 @@ function init() {
         });
         players = [];
         gameState.players.forEach((ply) => {
-            let p = player(ply.position, ply.rotation, ply.id == socket.id);
+            let p = player(
+                ply.position,
+                ply.rotation,
+                ply.id == socket.id && !debug
+            );
+            if (!p) return;
             if (ply.id == socket.id) {
                 localPlayer = ply;
                 localPlayerRep = p;
@@ -321,6 +334,10 @@ function init() {
     socket.on("gs", (gs) => {
         gameState = gs;
         reloadPlayers();
+    });
+    socket.on("actions", (a) => {
+        console.log(a);
+        actions = a;
     });
 
     socket.on("plyd", (plyd) => {

@@ -36,6 +36,8 @@ function roundToPlaces(value, decimals = 5) {
     return Math.round(value * (10 ^ decimals)) / (10 ^ decimals);
 }
 
+const actions = require("./actions.json");
+
 class ServerScene {
     constructor() {
         this.init();
@@ -51,6 +53,7 @@ class ServerScene {
 
         io.on("connection", (socket) => {
             socket.emit("gs", this.state);
+            socket.emit("actions", actions);
             let ply = this.addPlayer(socket.id);
             socket.on("move", (str) => {
                 let horz = 0;
