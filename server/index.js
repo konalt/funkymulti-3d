@@ -5,6 +5,32 @@ var _ammoInitalizerFunc = require("@enable3d/ammo-on-nodejs/ammo/ammo.js");
 const {Physics, ServerClock} = require("@enable3d/ammo-on-nodejs");
 const THREE = require("../libs/three.min");
 
+var sens = 2;
+
+function encodePlayerData(plyd) {
+    var o = "";
+    plyd.forEach((ply) => {
+        o += [
+            ply.name,
+            ply.id,
+            [ply.position.x, ply.position.y, ply.position.z].join(","),
+            [ply.rotation.x, ply.rotation.y, ply.rotation.z].join(","),
+            ply.move.join(","),
+            ply.look.join(","),
+            "null",
+            [ply.offset.x, ply.offset.y, ply.offset.z].join(","),
+            ply.cameraAngle,
+            ply.cameraAngle2,
+        ].join(":");
+        o += "\n";
+    });
+    return o.trim();
+}
+
+function roundToPlaces(value, decimals = 3) {
+    return Math.round(value * (10 ^ decimals)) / (10 ^ decimals);
+}
+
 class ServerScene {
     constructor() {
         this.init();
@@ -36,6 +62,10 @@ class ServerScene {
                 if (str[6] == "1") vert--;
                 if (str[7] == "1") horz--;
                 ply.look = [horz, vert];
+            });
+            socket.on("mouse", ([mouseX, mouseY]) => {
+                ply.cameraAngle += (mouseY / 20) * sens;
+                ply.cameraAngle2 -= (mouseX / 20) * sens;
             });
             socket.on("disconnect", () => {
                 this.removePlayer(socket.id);
@@ -81,9 +111,11 @@ class ServerScene {
             look: [0, 0],
             physics: physObject,
             offset: {x: 0, y: 0.5, z: 0},
+            cameraAngle: 0,
+            cameraAngle2: 0,
         };
         this.state.players.push(ply);
-        io.emit("gs", this.state);
+        io.emit("plyd", encodePlayerData(this.state.players));
         return ply;
     }
     removePlayer(name) {
@@ -93,23 +125,41 @@ class ServerScene {
     }
     update(delta) {
         if (!this.state.players[0]) return;
+        for (const ply of this.state.players) {
+            ply.physics.body.ammo.setAngularVelocity(
+                0,
+                ply.physics.body.ammo.getAngularVelocity() -
+                    (ply.cameraAngle2 * Math.PI) / 180,
+                0
+            );
+        }
         this.physics.update(delta * 1000);
 
         for (const ply of this.state.players) {
-            ply.position.x = ply.physics.position.x - ply.offset.x;
-            ply.position.y = ply.physics.position.y - ply.offset.y;
-            ply.position.z = ply.physics.position.z - ply.offset.z;
-            ply.rotation.x = ply.physics.quaternion.x;
-            ply.rotation.y = ply.physics.quaternion.y;
-            ply.rotation.z = ply.physics.quaternion.z;
-            ply.rotation.w = ply.physics.quaternion.w;
+            ply.position.x = roundToPlaces(
+                ply.physics.position.x - ply.offset.x
+            );
+            ply.position.y = roundToPlaces(
+                ply.physics.position.y - ply.offset.y
+            );
+            ply.position.z = roundToPlaces(
+                ply.physics.position.z - ply.offset.z
+            );
+            ply.rotation.x = roundToPlaces(ply.physics.quaternion.x);
+            ply.rotation.y = roundToPlaces(ply.physics.quaternion.y);
+            ply.rotation.z = roundToPlaces(ply.physics.quaternion.z);
+            ply.rotation.w = roundToPlaces(ply.physics.quaternion.w);
 
+            ply.physics.setRotationFromEuler(
+                new THREE.Euler(0, 0 + (ply.cameraAngle2 * Math.PI) / 180, 0)
+            );
             _v1.copy(new THREE.Vector3(0, 0, 1)).applyQuaternion(
                 ply.physics.quaternion
             );
             _v2.copy(new THREE.Vector3(1, 0, 0)).applyQuaternion(
                 ply.physics.quaternion
             );
+            ply.physics.body.ammo.setAngularVelocity(0, 0, 0);
             ply.physics.body.ammo.setLinearVelocity(
                 new Ammo.btVector3(
                     _v1.x * ply.move[1] + _v2.x * ply.move[0],
@@ -119,7 +169,7 @@ class ServerScene {
             );
         }
 
-        io.emit("gs", this.state);
+        io.emit("plyd", encodePlayerData(this.state.players));
     }
 }
 

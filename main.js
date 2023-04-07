@@ -2,6 +2,67 @@ import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 import {PointerLockControls} from "three/addons/controls/PointerLockControls.js";
+import Stats from "./libs/stats.min";
+
+const stats = new Stats();
+document.body.appendChild(stats.domElement);
+
+function dataToObject(data, keys) {
+    let pd = data.split(":");
+    let object = {};
+    keys.forEach((k, i) => {
+        switch (k[1]) {
+            case "string":
+                object[k[0]] = pd[i];
+                break;
+            case "vec3":
+                object[k[0]] = {
+                    x: parseFloat(pd[i].split(",")[0]),
+                    y: parseFloat(pd[i].split(",")[1]),
+                    z: parseFloat(pd[i].split(",")[2]),
+                };
+                break;
+            case "quat":
+                object[k[0]] = {
+                    x: parseFloat(pd[i].split(",")[0]),
+                    y: parseFloat(pd[i].split(",")[1]),
+                    z: parseFloat(pd[i].split(",")[2]),
+                    w: parseFloat(pd[i].split(",")[3]),
+                };
+                break;
+            case "vec2a":
+                object[k[0]] = pd[i].split(",").map((x) => parseFloat(x));
+                break;
+            case "null":
+                object[k[0]] = null;
+                break;
+            case "int":
+                object[k[0]] = parseInt(pd[i]);
+                break;
+        }
+    });
+    return object;
+}
+
+function parsePlayerData(plyd) {
+    let o = [];
+    let keys = [
+        ["name", "string"],
+        ["id", "string"],
+        ["position", "vec3"],
+        ["rotation", "quat"],
+        ["move", "vec2a"],
+        ["look", "vec2a"],
+        ["physics", "null"],
+        ["offset", "vec3"],
+        ["cameraAngle", "int"],
+        ["cameraAngle2", "int"],
+    ];
+    plyd.split("\n").forEach((ply) => {
+        o.push(dataToObject(ply, keys));
+    });
+    return o;
+}
 
 function init() {
     var settings = {
@@ -45,7 +106,7 @@ function init() {
     function base() {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(
-            75,
+            90,
             window.innerWidth / window.innerHeight,
             0.1,
             1000
@@ -57,8 +118,8 @@ function init() {
             5000
         );
 
-        const camerahelper = new THREE.CameraHelper(camera);
-        scene.add(camerahelper);
+        /* const camerahelper = new THREE.CameraHelper(camera);
+        scene.add(camerahelper); */
 
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -66,14 +127,17 @@ function init() {
         return [scene, camera, renderer, camera2];
     }
 
-    function player(pos, quat) {
+    function player(pos, quat, invisible) {
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 32, 32),
-            new THREE.MeshStandardMaterial({color: 0x00ffff})
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                visible: !invisible,
+            })
         );
         const leftEye = new THREE.Mesh(
             new THREE.SphereGeometry(0.175, 16, 16),
-            new THREE.MeshBasicMaterial({color: 0xffffff})
+            new THREE.MeshBasicMaterial({color: 0xffffff, visible: !invisible})
         );
         leftEye.scale.y = 2;
         leftEye.position.y = 0.5;
@@ -81,7 +145,7 @@ function init() {
         leftEye.position.x = settings.PlayerEyeGap;
         const rightEye = new THREE.Mesh(
             new THREE.SphereGeometry(0.175, 16, 16),
-            new THREE.MeshBasicMaterial({color: 0xffffff})
+            new THREE.MeshBasicMaterial({color: 0xffffff, visible: !invisible})
         );
         rightEye.scale.y = 2;
         rightEye.position.y = 0.5;
@@ -97,7 +161,10 @@ function init() {
                 0,
                 Math.PI / 2
             ),
-            new THREE.MeshStandardMaterial({color: 0x00ffff})
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                visible: !invisible,
+            })
         );
         leftFoot.scale.z = 1.4;
         leftFoot.position.x = settings.PlayerFootGap;
@@ -111,19 +178,28 @@ function init() {
                 0,
                 Math.PI / 2
             ),
-            new THREE.MeshStandardMaterial({color: 0x00ffff})
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                visible: !invisible,
+            })
         );
         rightFoot.scale.z = 1.4;
         rightFoot.position.x = -settings.PlayerFootGap;
         const leftHand = new THREE.Mesh(
             new THREE.SphereGeometry(0.25, 32, 32),
-            new THREE.MeshStandardMaterial({color: 0x00ffff})
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                visible: !invisible,
+            })
         );
         leftHand.position.y = 1.6;
         leftHand.position.x = settings.PlayerHandGap;
         const rightHand = new THREE.Mesh(
             new THREE.SphereGeometry(0.25, 32, 32),
-            new THREE.MeshStandardMaterial({color: 0x00ffff})
+            new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                visible: !invisible,
+            })
         );
         rightHand.position.y = 1.6;
         rightHand.position.x = -settings.PlayerHandGap;
@@ -169,6 +245,42 @@ function init() {
     var localPlayer;
     var localPlayerRep;
 
+    function reloadPlayers() {
+        players.forEach((plytr) => {
+            scene.remove(plytr);
+        });
+        players = [];
+        gameState.players.forEach((ply) => {
+            let p = player(ply.position, ply.rotation, ply.id == socket.id);
+            if (ply.id == socket.id) {
+                localPlayer = ply;
+                localPlayerRep = p;
+            }
+            scene.add(p);
+            players.push(p);
+        });
+        if (localPlayer) {
+            localPlayerRep.add(camera);
+            camera.position.y = 1.5;
+            camera.rotation.y = Math.PI;
+            console.log((localPlayer.cameraAngle * Math.PI) / 180);
+            camera.setRotationFromEuler(
+                new THREE.Euler(
+                    (localPlayer.cameraAngle * Math.PI) / 180,
+                    Math.PI,
+                    0
+                )
+            );
+            localPlayerRep.setRotationFromEuler(
+                new THREE.Euler(
+                    0,
+                    0 + (localPlayer.cameraAngle2 * Math.PI) / 180,
+                    0
+                )
+            );
+        }
+    }
+
     var hk = [],
         jp = [],
         jr = [],
@@ -204,28 +316,15 @@ function init() {
         });
     };
 
-    document.body;
-
     socket.on("gs", (gs) => {
         gameState = gs;
-        players.forEach((plytr) => {
-            scene.remove(plytr);
-        });
-        players = [];
-        gs.players.forEach((ply) => {
-            let p = player(ply.position, ply.rotation);
-            if (ply.id == socket.id) {
-                localPlayer = ply;
-                localPlayerRep = p;
-            }
-            scene.add(p);
-            players.push(p);
-        });
-        if (localPlayer) {
-            localPlayerRep.add(camera);
-            camera.position.y = 1.5;
-            camera.rotation.y = Math.PI;
-        }
+        reloadPlayers();
+    });
+
+    socket.on("plyd", (plyd) => {
+        let parsed = parsePlayerData(plyd);
+        gameState.players = parsed;
+        reloadPlayers();
     });
 
     amb(0x404040);
@@ -248,10 +347,24 @@ function init() {
             socket.emit("move", movestring);
         }
 
-        renderer.render(scene, camera2);
+        renderer.render(scene, camera);
+        stats.update();
         jp = [];
         jr = [];
     }
+
+    renderer.domElement.addEventListener("click", async () => {
+        if (!document.pointerLockElement)
+            await renderer.domElement.requestPointerLock({
+                unadjustedMovement: true,
+            });
+    });
+    renderer.domElement.addEventListener("mousemove", (me) => {
+        if (document.pointerLockElement) {
+            console.log(me.movementX, me.movementY);
+            socket.emit("mouse", [me.movementX, me.movementY]);
+        }
+    });
     animate();
 }
 
