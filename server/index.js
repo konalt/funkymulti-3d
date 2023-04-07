@@ -142,13 +142,16 @@ class ServerScene {
 
         for (const ply of this.state.players) {
             ply.position.x = roundToPlaces(
-                ply.physics.position.x - ply.offset.x
+                ply.physics.position.x - ply.offset.x,
+                7
             );
             ply.position.y = roundToPlaces(
-                ply.physics.position.y - ply.offset.y
+                ply.physics.position.y - ply.offset.y,
+                7
             );
             ply.position.z = roundToPlaces(
-                ply.physics.position.z - ply.offset.z
+                ply.physics.position.z - ply.offset.z,
+                7
             );
             ply.rotation.x = roundToPlaces(ply.physics.quaternion.x);
             ply.rotation.y = roundToPlaces(ply.physics.quaternion.y);
