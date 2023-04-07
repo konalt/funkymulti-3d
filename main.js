@@ -259,6 +259,9 @@ function init() {
                 localPlayer = ply;
                 localPlayerRep = p;
             }
+            p.setRotationFromEuler(
+                new THREE.Euler(0, (ply.cameraAngle2 * Math.PI) / 180, 0)
+            );
             scene.add(p);
             players.push(p);
         });
@@ -270,13 +273,6 @@ function init() {
                 new THREE.Euler(
                     (localPlayer.cameraAngle * Math.PI) / 180,
                     Math.PI,
-                    0
-                )
-            );
-            localPlayerRep.setRotationFromEuler(
-                new THREE.Euler(
-                    0,
-                    (localPlayer.cameraAngle2 * Math.PI) / 180,
                     0
                 )
             );
