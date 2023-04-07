@@ -121,14 +121,6 @@ function player(x, y, z) {
         );
         hitbox.position.y = 2.5 / 2;
         g.add(hitbox);
-        const collision = new THREE.Mesh(
-            new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16, 1, false),
-            new THREE.MeshBasicMaterial({
-                color: 0x0000ff,
-            })
-        );
-        collision.position.y = 0.05;
-        g.add(collision);
     }
     g.position.x = x;
     g.position.y = y;
@@ -140,14 +132,14 @@ function player(x, y, z) {
 const [scene, camera, renderer] = base();
 
 amb(0x404040);
-cube(0, -0.2, 0, 40, 0.4, 40);
 light(0, 5, -2.5);
 light(0, 5, 2.5);
 
-player(0, 1, 0);
+player(0, 5, 0);
+cube(0, -0.2, 0, 40, 0.4, 40);
 
-camera.position.z = 5;
-camera.position.y = 2.5;
+camera.position.z = 20;
+camera.position.y = 3;
 const controls = new OrbitControls(camera, renderer.domElement);
 
 function animate() {
