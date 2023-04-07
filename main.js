@@ -186,15 +186,7 @@ function init(params) {
     light(0, 5, -2.5);
     light(0, 5, 2.5);
 
-    const ply = player(0, 5, 0);
-    //physbox(ply, new Ammo.btVector3(1, 1, 1), new THREE.Vector3(0, 1, 0), 1);
     const gnd = cube(0, -0.2, 0, 40, 0.4, 40);
-    /* physbox(
-        gnd,
-        new Ammo.btVector3(40, 0.4, 40),
-        new THREE.Vector3(0, 0, 0),
-        0
-    ); */
 
     camera.position.z = 20;
     camera.position.y = 3;
