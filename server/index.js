@@ -32,7 +32,7 @@ function encodePlayerData(plyd) {
     return o.trim();
 }
 
-function roundToPlaces(value, decimals = 3) {
+function roundToPlaces(value, decimals = 5) {
     return Math.round(value * (10 ^ decimals)) / (10 ^ decimals);
 }
 
