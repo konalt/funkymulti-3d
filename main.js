@@ -5,7 +5,7 @@ import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 function init() {
     var settings = {
         EnableLightHelper: true,
-        EnablePlayerHitboxHelper: true,
+        EnablePlayerHitboxHelper: false,
         PlayerEyeGap: 0.3,
         PlayerFootGap: 0.5,
         PlayerHandGap: 1.5,
@@ -56,7 +56,7 @@ function init() {
         return [scene, camera, renderer];
     }
 
-    function player(x, y, z) {
+    function player(pos, quat) {
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 32, 32),
             new THREE.MeshStandardMaterial({color: 0x00ffff})
@@ -140,9 +140,8 @@ function init() {
             hitbox.position.y = 2.5 / 2;
             g.add(hitbox);
         }
-        g.position.x = x;
-        g.position.y = y;
-        g.position.z = z;
+        g.position.set(pos.x, pos.y, pos.z);
+        g.quaternion.set(quat.x, quat.y, quat.z, quat.w);
         scene.add(g);
         return g;
     }
@@ -161,7 +160,7 @@ function init() {
         });
         players = [];
         gs.players.forEach((ply) => {
-            let p = player(ply.position.x, ply.position.y, ply.position.z);
+            let p = player(ply.position, ply.rotation);
             scene.add(p);
             players.push(p);
         });
@@ -171,7 +170,7 @@ function init() {
     light(0, 5, -2.5);
     light(0, 5, 2.5);
 
-    const gnd = cube(0, -0.2, 0, 40, 0.4, 40);
+    const gnd = cube(0, 0, 0, 40, 1, 40);
 
     camera.position.z = 20;
     camera.position.y = 3;

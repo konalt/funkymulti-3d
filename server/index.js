@@ -41,7 +41,7 @@ class ServerScene {
     addPlayer(name) {
         const physObject = this.physics.add.box({
             name: "Player_" + name,
-            mass: 0.1,
+            mass: 1,
             x: 0,
             y: 10,
             z: 0,
@@ -61,6 +61,7 @@ class ServerScene {
                 w: 0,
             },
             physics: physObject,
+            offset: {x: 0, y: 0.5, z: 0},
         };
         this.state.players.push(ply);
         io.emit("gs", this.state);
@@ -75,9 +76,13 @@ class ServerScene {
         this.physics.update(delta * 1000);
 
         for (const ply of this.state.players) {
-            ply.position.x = ply.physics.position.x;
-            ply.position.y = ply.physics.position.y;
-            ply.position.z = ply.physics.position.z;
+            ply.position.x = ply.physics.position.x - ply.offset.x;
+            ply.position.y = ply.physics.position.y - ply.offset.y;
+            ply.position.z = ply.physics.position.z - ply.offset.z;
+            ply.rotation.x = ply.physics.quaternion.x;
+            ply.rotation.y = ply.physics.quaternion.y;
+            ply.rotation.z = ply.physics.quaternion.z;
+            ply.rotation.w = ply.physics.quaternion.w;
         }
 
         io.emit("gs", this.state);
