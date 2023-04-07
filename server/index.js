@@ -83,6 +83,11 @@ class ServerScene {
                 if (str[7] == "1") horz--;
                 ply.look = [horz, vert];
             });
+            socket.on("jump", () => {
+                ply.physics.body.ammo.applyCentralForce(
+                    new Ammo.btVector3(0, 350, 0)
+                );
+            });
             socket.on("shoot", () => {
                 console.log("bangbangbang");
                 const physObject = this.physics.add.sphere({

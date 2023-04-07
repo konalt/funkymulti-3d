@@ -498,6 +498,9 @@ function init() {
         if (getKeyDown("mouse1")) {
             //socket.emit("shoot");
         }
+        if (getKeyDown("space")) {
+            socket.emit("jump");
+        }
 
         renderer.render(scene, debug ? camera2 : camera);
         vmrenderer.render(scene, vmcamera);
