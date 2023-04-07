@@ -7,6 +7,8 @@ import Stats from "./libs/stats.min";
 const stats = new Stats();
 document.body.appendChild(stats.domElement);
 
+var debug = true;
+
 function dataToObject(data, keys) {
     let pd = data.split(":");
     let object = {};
@@ -239,7 +241,9 @@ function init() {
 
     camera2.position.z = 5;
     camera2.position.y = 2;
-    //new OrbitControls(camera2, renderer.domElement);
+    if (debug) {
+        new OrbitControls(camera2, renderer.domElement);
+    }
 
     const socket = io("https://konalt.us.to:43958");
 
@@ -345,23 +349,25 @@ function init() {
             socket.emit("move", movestring);
         }
 
-        renderer.render(scene, camera);
+        renderer.render(scene, debug ? camera2 : camera);
         stats.update();
         jp = [];
         jr = [];
     }
 
-    renderer.domElement.addEventListener("click", async () => {
-        if (!document.pointerLockElement)
-            await renderer.domElement.requestPointerLock({
-                unadjustedMovement: true,
-            });
-    });
-    renderer.domElement.addEventListener("mousemove", (me) => {
-        if (document.pointerLockElement) {
-            socket.emit("mouse", [me.movementX, me.movementY]);
-        }
-    });
+    if (!debug) {
+        renderer.domElement.addEventListener("click", async () => {
+            if (!document.pointerLockElement)
+                await renderer.domElement.requestPointerLock({
+                    unadjustedMovement: true,
+                });
+        });
+        renderer.domElement.addEventListener("mousemove", (me) => {
+            if (document.pointerLockElement) {
+                socket.emit("mouse", [me.movementX, me.movementY]);
+            }
+        });
+    }
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
