@@ -121,6 +121,14 @@ function player(x, y, z) {
         );
         hitbox.position.y = 2.5 / 2;
         g.add(hitbox);
+        const collision = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16, 1, false),
+            new THREE.MeshBasicMaterial({
+                color: 0x0000ff,
+            })
+        );
+        collision.position.y = 0.05;
+        g.add(collision);
     }
     g.position.x = x;
     g.position.y = y;
