@@ -39,6 +39,9 @@ function dataToObject(data, keys) {
             case "int":
                 object[k[0]] = parseInt(pd[i]);
                 break;
+            case "flt":
+                object[k[0]] = parseFloat(pd[i]);
+                break;
         }
     });
     return object;
@@ -55,8 +58,8 @@ function parsePlayerData(plyd) {
         ["look", "vec2a"],
         ["physics", "null"],
         ["offset", "vec3"],
-        ["cameraAngle", "int"],
-        ["cameraAngle2", "int"],
+        ["cameraAngle", "flt"],
+        ["cameraAngle2", "flt"],
     ];
     plyd.split("\n").forEach((ply) => {
         o.push(dataToObject(ply, keys));
@@ -236,7 +239,7 @@ function init() {
 
     camera2.position.z = 5;
     camera2.position.y = 2;
-    new OrbitControls(camera2, renderer.domElement);
+    //new OrbitControls(camera2, renderer.domElement);
 
     const socket = io("https://konalt.us.to:43958");
 
@@ -263,7 +266,6 @@ function init() {
             localPlayerRep.add(camera);
             camera.position.y = 1.5;
             camera.rotation.y = Math.PI;
-            console.log((localPlayer.cameraAngle * Math.PI) / 180);
             camera.setRotationFromEuler(
                 new THREE.Euler(
                     (localPlayer.cameraAngle * Math.PI) / 180,
@@ -274,7 +276,7 @@ function init() {
             localPlayerRep.setRotationFromEuler(
                 new THREE.Euler(
                     0,
-                    0 + (localPlayer.cameraAngle2 * Math.PI) / 180,
+                    (localPlayer.cameraAngle2 * Math.PI) / 180,
                     0
                 )
             );
@@ -361,7 +363,6 @@ function init() {
     });
     renderer.domElement.addEventListener("mousemove", (me) => {
         if (document.pointerLockElement) {
-            console.log(me.movementX, me.movementY);
             socket.emit("mouse", [me.movementX, me.movementY]);
         }
     });
