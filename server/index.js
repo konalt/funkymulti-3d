@@ -3,6 +3,7 @@ const https = require("https");
 const fs = require("fs");
 var _ammoInitalizerFunc = require("@enable3d/ammo-on-nodejs/ammo/ammo.js");
 const {Physics, ServerClock} = require("@enable3d/ammo-on-nodejs");
+const THREE = require("../libs/three.min");
 
 class ServerScene {
     constructor() {
@@ -28,6 +29,13 @@ class ServerScene {
                 if (str[2] == "1") vert--;
                 if (str[3] == "1") horz--;
                 ply.move = [horz, vert];
+                horz = 0;
+                vert = 0;
+                if (str[4] == "1") vert++;
+                if (str[5] == "1") horz++;
+                if (str[6] == "1") vert--;
+                if (str[7] == "1") horz--;
+                ply.look = [horz, vert];
             });
             socket.on("disconnect", () => {
                 this.removePlayer(socket.id);
@@ -70,6 +78,7 @@ class ServerScene {
                 w: 0,
             },
             move: [0, 0],
+            look: [0, 0],
             physics: physObject,
             offset: {x: 0, y: 0.5, z: 0},
         };
@@ -94,12 +103,22 @@ class ServerScene {
             ply.rotation.y = ply.physics.quaternion.y;
             ply.rotation.z = ply.physics.quaternion.z;
             ply.rotation.w = ply.physics.quaternion.w;
+
+            _v1.copy(new THREE.Vector3(0, 0, 1)).applyQuaternion(
+                ply.physics.quaternion
+            );
+            _v2.copy(new THREE.Vector3(1, 0, 0)).applyQuaternion(
+                ply.physics.quaternion
+            );
             ply.physics.body.ammo.setLinearVelocity(
                 new Ammo.btVector3(
-                    ply.move[0],
-                    ply.physics.body.ammo.getLinearVelocity().y() / 8,
-                    ply.move[1]
-                ).op_mul(8)
+                    _v1.x * ply.move[1] + _v2.x * ply.move[0],
+                    ply.physics.body.ammo.getLinearVelocity().y() / 10,
+                    _v1.z * ply.move[1] + _v2.z * ply.move[0]
+                ).op_mul(10)
+            );
+            ply.physics.body.ammo.setAngularVelocity(
+                new Ammo.btVector3(0, ply.look[1] * 5, 0)
             );
         }
 
@@ -107,6 +126,8 @@ class ServerScene {
     }
 }
 
+let _v1 = new THREE.Vector3();
+let _v2 = new THREE.Vector3();
 let io;
 
 _ammoInitalizerFunc().then((ammo) => {

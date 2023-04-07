@@ -243,6 +243,10 @@ function init() {
         movestring += bts(getKey("keya"));
         movestring += bts(getKey("keys"));
         movestring += bts(getKey("keyd"));
+        movestring += bts(getKey("arrowleft"));
+        movestring += bts(getKey("arrowup"));
+        movestring += bts(getKey("arrowright"));
+        movestring += bts(getKey("arrowdown"));
         if (lastmovestring != movestring) {
             lastmovestring = movestring;
             socket.emit("move", movestring);
