@@ -152,7 +152,7 @@ function init(params) {
     }
 
     function physbox(obj, boxsize, offset, mass) {
-        let transform = new Ammo.btTransform();
+        /* let transform = new Ammo.btTransform();
         transform.setIdentity();
         transform.setOrigin(
             new Ammo.btVector3(
@@ -176,7 +176,7 @@ function init(params) {
         physicsWorld.addRigidBody(body);
         obj.userData.physicsBody = body;
         obj.userData.physicsOffset = offset;
-        rigidBodies.push(obj);
+        rigidBodies.push(obj); */
     }
 
     const [scene, camera, renderer] = base();
@@ -224,7 +224,7 @@ function init(params) {
     animate();
 }
 
-let physicsWorld;
+/* let physicsWorld;
 
 function physSetup() {
     tmpTrans = new Ammo.btTransform();
@@ -242,8 +242,8 @@ function physSetup() {
     physicsWorld.setGravity(new Ammo.btVector3(0, -9.81 * 2, 0));
 }
 
-Ammo().then(AmmoStart);
-function AmmoStart() {
+Ammo().then(start); */
+function start() {
     physSetup();
     init();
 }
