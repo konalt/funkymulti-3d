@@ -3,6 +3,10 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 
 var settings = {
     EnableLightHelper: true,
+    EnablePlayerHitboxHelper: true,
+    PlayerEyeGap: 0.3,
+    PlayerFootGap: 0.5,
+    PlayerHandGap: 1.5,
 };
 
 function amb(color) {
@@ -50,12 +54,89 @@ function base() {
     return [scene, camera, renderer];
 }
 
+function player(x, y, z) {
+    const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 32, 32),
+        new THREE.MeshStandardMaterial({color: 0x00ffff})
+    );
+    const leftEye = new THREE.Mesh(
+        new THREE.SphereGeometry(0.175, 16, 16),
+        new THREE.MeshBasicMaterial({color: 0xffffff})
+    );
+    leftEye.scale.y = 2;
+    leftEye.position.y = 0.5;
+    leftEye.position.z = 0.8;
+    leftEye.position.x = settings.PlayerEyeGap;
+    const rightEye = new THREE.Mesh(
+        new THREE.SphereGeometry(0.175, 16, 16),
+        new THREE.MeshBasicMaterial({color: 0xffffff})
+    );
+    rightEye.scale.y = 2;
+    rightEye.position.y = 0.5;
+    rightEye.position.z = 0.8;
+    rightEye.position.x = -settings.PlayerEyeGap;
+    const leftFoot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({color: 0x00ffff})
+    );
+    leftFoot.scale.z = 1.4;
+    leftFoot.position.x = settings.PlayerFootGap;
+    const rightFoot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({color: 0x00ffff})
+    );
+    rightFoot.scale.z = 1.4;
+    rightFoot.position.x = -settings.PlayerFootGap;
+    const leftHand = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 32, 32),
+        new THREE.MeshStandardMaterial({color: 0x00ffff})
+    );
+    leftHand.position.y = 1.6;
+    leftHand.position.x = settings.PlayerHandGap;
+    const rightHand = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 32, 32),
+        new THREE.MeshStandardMaterial({color: 0x00ffff})
+    );
+    rightHand.position.y = 1.6;
+    rightHand.position.x = -settings.PlayerHandGap;
+    sphere.add(leftEye);
+    sphere.add(rightEye);
+    sphere.position.y = 1.5;
+    const helper = new THREE.AxesHelper(1);
+    const g = new THREE.Group();
+    g.add(helper);
+    g.add(sphere);
+    g.add(leftFoot);
+    g.add(rightFoot);
+    g.add(leftHand);
+    g.add(rightHand);
+    if (settings.EnablePlayerHitboxHelper) {
+        const hitbox = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.75, 1.75, 2.5, 16, 1, false),
+            new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                opacity: 0.5,
+                transparent: true,
+            })
+        );
+        hitbox.position.y = 2.5 / 2;
+        g.add(hitbox);
+    }
+    g.position.x = x;
+    g.position.y = y;
+    g.position.z = z;
+    scene.add(g);
+    return g;
+}
+
 const [scene, camera, renderer] = base();
 
 amb(0x404040);
-cube(0, -0.2, 0, 20, 0.4, 20);
-light(-2.5, 2.5, 2.5);
-light(2.5, 2.5, -2.5);
+cube(0, -0.2, 0, 40, 0.4, 40);
+light(0, 5, -2.5);
+light(0, 5, 2.5);
+
+player(0, 1, 0);
 
 camera.position.z = 5;
 camera.position.y = 2.5;
