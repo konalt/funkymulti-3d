@@ -2,10 +2,7 @@ import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
 
-var rigidBodies = [],
-    tmpTrans;
-
-function init(params) {
+function init() {
     var settings = {
         EnableLightHelper: true,
         EnablePlayerHitboxHelper: true,
@@ -13,8 +10,6 @@ function init(params) {
         PlayerFootGap: 0.5,
         PlayerHandGap: 1.5,
     };
-
-    let clock = new THREE.Clock();
 
     function amb(color) {
         const a = new THREE.AmbientLight(color);
@@ -152,35 +147,25 @@ function init(params) {
         return g;
     }
 
-    function physbox(obj, boxsize, offset, mass) {
-        /* let transform = new Ammo.btTransform();
-        transform.setIdentity();
-        transform.setOrigin(
-            new Ammo.btVector3(
-                obj.position.x + offset.x,
-                obj.position.y + offset.y,
-                obj.position.z + offset.z
-            )
-        );
-        transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
-        let motionState = new Ammo.btDefaultMotionState(transform);
-        let colShape = new Ammo.btBoxShape(boxsize);
-        let localInertia = new Ammo.btVector3(0, 0, 0);
-        colShape.calculateLocalInertia(mass, localInertia);
-        let rbInfo = new Ammo.btRigidBodyConstructionInfo(
-            mass,
-            motionState,
-            colShape,
-            localInertia
-        );
-        let body = new Ammo.btRigidBody(rbInfo);
-        physicsWorld.addRigidBody(body);
-        obj.userData.physicsBody = body;
-        obj.userData.physicsOffset = offset;
-        rigidBodies.push(obj); */
-    }
-
     const [scene, camera, renderer] = base();
+
+    const socket = io("https://konalt.us.to:43958");
+
+    var gameState = {};
+    var players = [];
+
+    socket.on("gs", (gs) => {
+        gameState = gs;
+        players.forEach((plytr) => {
+            scene.remove(plytr);
+        });
+        players = [];
+        gs.players.forEach((ply) => {
+            let p = player(ply.position.x, ply.position.y, ply.position.z);
+            scene.add(p);
+            players.push(p);
+        });
+    });
 
     amb(0x404040);
     light(0, 5, -2.5);
@@ -194,53 +179,13 @@ function init(params) {
 
     function animate() {
         requestAnimationFrame(animate);
-        /* physicsWorld.stepSimulation(clock.getDelta(), 10);
-        for (let i = 0; i < rigidBodies.length; i++) {
-            let objThree = rigidBodies[i];
-            let objAmmo = objThree.userData.physicsBody;
-            let offset = objThree.userData.physicsOffset;
-            let ms = objAmmo.getMotionState();
-            if (ms) {
-                ms.getWorldTransform(tmpTrans);
-                let p = tmpTrans.getOrigin();
-                let q = tmpTrans.getRotation();
-                objThree.position.set(
-                    p.x() - offset.x,
-                    p.y() - offset.y,
-                    p.z() - offset.z
-                );
-                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
-            }
-        } */
         renderer.render(scene, camera);
     }
     animate();
 }
 
-/* let physicsWorld;
-
-function physSetup() {
-    tmpTrans = new Ammo.btTransform();
-    let collisionConfiguration = new Ammo.btDefaultCollisionConfiguration(),
-        dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration),
-        overlappingPairCache = new Ammo.btDbvtBroadphase(),
-        solver = new Ammo.btSequentialImpulseConstraintSolver();
-
-    physicsWorld = new Ammo.btDiscreteDynamicsWorld(
-        dispatcher,
-        overlappingPairCache,
-        solver,
-        collisionConfiguration
-    );
-    physicsWorld.setGravity(new Ammo.btVector3(0, -9.81 * 2, 0));
-}
-
-Ammo().then(start); */
 function start() {
-    //physSetup();
     init();
 }
-
-const socket = io("https://konalt.us.to:43958");
 
 start();
