@@ -1,8 +1,18 @@
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
-import {PointerLockControls} from "three/addons/controls/PointerLockControls.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import Stats from "./libs/stats.min";
+
+const gltfload = new GLTFLoader();
+
+function loadModel(path) {
+    return new Promise((res) => {
+        gltfload.load(path, (gltf) => {
+            res(gltf);
+        });
+    });
+}
 
 const stats = new Stats();
 document.body.appendChild(stats.domElement);
@@ -45,6 +55,7 @@ function dataToObject(data, keys) {
     let pd = data.split(":");
     let object = {};
     keys.forEach((k, i) => {
+        if (!pd[i]) return;
         switch (k[1]) {
             case "string":
                 object[k[0]] = pd[i];
@@ -110,7 +121,7 @@ function parseBulletData(plyd) {
     return o;
 }
 
-function init() {
+function init(models) {
     var settings = {
         EnableLightHelper: false,
         EnablePlayerHitboxHelper: false,
@@ -131,7 +142,7 @@ function init() {
         l.position.z = z;
         scene.add(l);
         if (settings.EnableLightHelper) {
-            const lh = new THREE.PointLightHelper(l, 1, 0xff0000);
+            const lh = new THREE.PointLightHelper(l, 0.2, 0xff0000);
             scene.add(lh);
         }
         return l;
@@ -180,7 +191,7 @@ function init() {
             0.1,
             100
         );
-        vmcamera.layers.set(1);
+        if (!debug) vmcamera.layers.set(1);
 
         /* const camerahelper = new THREE.CameraHelper(camera);
         scene.add(camerahelper); */
@@ -308,30 +319,45 @@ function init() {
         return g;
     }
 
-    function localhands() {
+    var handOffsetY = -0.4;
+
+    function localhands(actionName) {
+        if (!actions.hands) return;
+        var action = actions.hands[actionName];
+        if (!action) return console.warn("Invalid action " + actionName);
         const leftHand = new THREE.Mesh(
             new THREE.SphereGeometry(0.18, 32, 32),
             new THREE.MeshStandardMaterial({
                 color: 0x00ffff,
             })
         );
-        leftHand.position.x = 0.6;
-        leftHand.position.y = -0.4;
-        leftHand.position.z = -1;
-        leftHand.layers.set(1);
-
+        leftHand.position.x = action[0][0];
+        leftHand.position.y = action[0][1] + handOffsetY;
+        leftHand.position.z = action[0][2];
+        if (!debug) leftHand.layers.set(1);
         const rightHand = new THREE.Mesh(
             new THREE.SphereGeometry(0.18, 32, 32),
             new THREE.MeshStandardMaterial({
                 color: 0x00ffff,
             })
         );
-        rightHand.position.x = -0.6;
-        rightHand.position.y = -0.4;
-        rightHand.position.z = -1;
-        rightHand.layers.set(1);
-        const l = light(0, 1, 0);
-        l.layers.set(1);
+        rightHand.position.x = action[1][0];
+        rightHand.position.y = action[1][1] + handOffsetY;
+        rightHand.position.z = action[1][2];
+        if (!debug) rightHand.layers.set(1);
+        const weapon = models.m16.scene;
+        weapon.position.x = 0;
+        weapon.position.y = -0.2;
+        weapon.position.z = -0.7;
+        weapon.scale.multiplyScalar(2.5);
+        if (!debug)
+            weapon.traverse(function (child) {
+                child.layers.set(1);
+            });
+        leftHand.add(weapon);
+
+        const l = light(0, 0.5 + handOffsetY, -0.5);
+        if (!debug) l.layers.set(1);
         vmcamera.add(l);
         return [leftHand, rightHand];
     }
@@ -361,7 +387,7 @@ function init() {
             let p = player(
                 ply.position,
                 ply.rotation,
-                ply.id == socket.id,
+                ply.id == socket.id && !debug,
                 ply.action
             );
             if (!p) return;
@@ -455,22 +481,35 @@ function init() {
     socket.on("actions", (a) => {
         console.log(a);
         actions = a;
+        const hands = localhands("m16");
+        console.log(hands);
+        if (hands) {
+            vmcamera.add(hands[0]);
+            vmcamera.add(hands[1]);
+        }
     });
 
     socket.on("plyd", (plyd) => {
+        if (plyd.length == 0) {
+            return (gameState.players = []);
+        }
         let parsed = parsePlayerData(plyd);
         gameState.players = parsed;
         reloadPlayers();
     });
     socket.on("buld", (plyd) => {
+        if (plyd.length == 0) {
+            return (gameState.bullets = []);
+        }
         let parsed = parseBulletData(plyd);
         gameState.bullets = parsed;
+
         reloadBullets();
     });
 
     amb(0x404040);
-    light(0, 5, -2.5);
-    light(0, 5, 2.5);
+    light(-5, 10, -5);
+    light(5, 10, 5);
 
     const sky = new THREE.Mesh(
         new THREE.BoxGeometry(2000, 2000, 2000),
@@ -479,10 +518,6 @@ function init() {
     scene.add(sky);
 
     const gnd = cube(0, 0, 0, 40, 1, 40);
-
-    const [leftHand, rightHand] = localhands();
-    vmcamera.add(leftHand);
-    vmcamera.add(rightHand);
 
     let _v1 = new THREE.Vector3();
 
@@ -509,7 +544,7 @@ function init() {
         }
 
         renderer.render(scene, debug ? camera2 : camera);
-        vmrenderer.render(scene, vmcamera);
+        if (!debug) vmrenderer.render(scene, vmcamera);
         stats.update();
         jp = [];
         jr = [];
@@ -544,8 +579,10 @@ function init() {
     animate();
 }
 
-function start() {
-    init();
+async function start() {
+    init({
+        m16: await loadModel("public/m16.glb"),
+    });
 }
 
 start();
