@@ -88,14 +88,7 @@ class ServerScene {
                     new Ammo.btVector3(0, 350, 0)
                 );
             });
-            socket.on("shoot", () => {
-                const physObject = this.physics.add.box({
-                    name: "tmpB",
-                    width: 1,
-                    depth: 1,
-                    collisionFlags: 2,
-                    mass: 0,
-                });
+            socket.on("shoot", (wdir) => {
                 let bul = {
                     owner: ply.id,
                     position: {
@@ -103,39 +96,13 @@ class ServerScene {
                         y: ply.position.y + 1.6,
                         z: ply.position.z,
                     },
-                    rotation: {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                        w: 0,
-                    },
                     dv: {
                         x: 0,
                         y: 0,
                         z: 0,
                     },
-                    physics: physObject,
                 };
-                bul.physics.setRotationFromEuler(
-                    new THREE.Euler(
-                        (ply.cameraAngle * Math.PI) / 180,
-                        (ply.cameraAngle2 * Math.PI) / 180,
-                        0
-                    )
-                );
-                _v1.copy(new THREE.Vector3(0, 0, 1)).applyQuaternion(
-                    bul.physics.quaternion
-                );
-                _v2.copy(new THREE.Vector3(0, 1, 0)).applyQuaternion(
-                    bul.physics.quaternion
-                );
-                _v3.copy(new THREE.Vector3(1, 0, 0)).applyQuaternion(
-                    bul.physics.quaternion
-                );
-                bul.dv.x = roundToPlaces(_v1.x + _v2.x + _v3.x);
-                bul.dv.y = roundToPlaces(_v1.y + _v2.y + _v3.y);
-                bul.dv.z = roundToPlaces(_v1.z + _v2.z + _v3.z);
-                this.physics.destroy(bul.physics.body);
+                bul.dv = wdir;
                 this.state.bullets.push(bul);
             });
             socket.on("mouse", ([mouseX, mouseY]) => {
@@ -252,7 +219,6 @@ class ServerScene {
             bul.position.x += roundToPlaces(bul.dv.x);
             bul.position.y += roundToPlaces(bul.dv.y);
             bul.position.z += roundToPlaces(bul.dv.z);
-            console.log(bul.position, bul.dv);
         }
 
         cachedEmit("buld", encodeBulletData(this.state.bullets));

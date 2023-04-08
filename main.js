@@ -148,11 +148,11 @@ function init() {
         scene.add(c);
         return c;
     }
+
+    const bulletGeo = new THREE.SphereGeometry(0.02, 6, 6);
+    const bulletMat = new THREE.MeshBasicMaterial({color: 0xffffff});
     function bullet(x, y, z) {
-        const c = new THREE.Mesh(
-            new THREE.SphereGeometry(0.02, 6, 6),
-            new THREE.MeshBasicMaterial({color: 0xffffff})
-        );
+        const c = new THREE.Mesh(bulletGeo, bulletMat);
         c.position.x = x;
         c.position.y = y;
         c.position.z = z;
@@ -484,6 +484,8 @@ function init() {
     vmcamera.add(leftHand);
     vmcamera.add(rightHand);
 
+    let _v1 = new THREE.Vector3();
+
     var lastmovestring = "";
     function animate() {
         requestAnimationFrame(animate);
@@ -498,7 +500,9 @@ function init() {
             socket.emit("move", movestring);
         }
         if (getKeyDown("mouse1")) {
-            socket.emit("shoot");
+            camera.getWorldDirection(_v1);
+            console.log(_v1);
+            socket.emit("shoot", _v1);
         }
         if (getKeyDown("space")) {
             socket.emit("jump");
