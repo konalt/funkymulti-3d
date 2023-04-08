@@ -65,6 +65,8 @@ class ServerScene {
 
         io.on("connection", (socket) => {
             socket.emit("gs", this.state);
+            socket.emit("plyd", encodePlayerData(this.state.players));
+            socket.emit("buld", encodeBulletData(this.state.bullets));
             socket.emit("actions", actions);
             let ply = this.addPlayer(socket.id);
             socket.on("move", (str) => {
