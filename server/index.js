@@ -35,7 +35,7 @@ function encodePlayerData(plyd) {
 function encodeBulletData(buld) {
     var o = "";
     buld.forEach((bul) => {
-        o += [[ply.position.x, ply.position.y, ply.position.z].join(",")].join(
+        o += [[bul.position.x, bul.position.y, bul.position.z].join(",")].join(
             ":"
         );
         o += "\n";
@@ -89,14 +89,12 @@ class ServerScene {
                 );
             });
             socket.on("shoot", () => {
-                console.log("bangbangbang");
-                const physObject = this.physics.add.sphere({
-                    name: "Bullet_" + ply.id,
+                const physObject = this.physics.add.box({
+                    name: "tmpB",
+                    width: 1,
+                    depth: 1,
+                    collisionFlags: 2,
                     mass: 0,
-                    radius: 0.2,
-                    x: ply.position.x,
-                    y: ply.position.y + 1.6,
-                    z: ply.position.z,
                 });
                 let bul = {
                     owner: ply.id,
@@ -110,6 +108,11 @@ class ServerScene {
                         y: 0,
                         z: 0,
                         w: 0,
+                    },
+                    dv: {
+                        x: 0,
+                        y: 0,
+                        z: 0,
                     },
                     physics: physObject,
                 };
@@ -129,14 +132,11 @@ class ServerScene {
                 _v3.copy(new THREE.Vector3(1, 0, 0)).applyQuaternion(
                     bul.physics.quaternion
                 );
-                bul.physics.body.ammo.setLinearVelocity(
-                    // is there a better way to do this?
-                    new Ammo.btVector3(
-                        _v1.x + _v2.x + _v3.x,
-                        _v1.y + _v2.y + _v3.y,
-                        _v1.z + _v2.z + _v3.z
-                    ).op_mul(0)
-                );
+                bul.dv.x = roundToPlaces(_v1.x + _v2.x + _v3.x);
+                bul.dv.y = roundToPlaces(_v1.y + _v2.y + _v3.y);
+                bul.dv.z = roundToPlaces(_v1.z + _v2.z + _v3.z);
+                this.physics.destroy(bul.physics.body);
+                this.state.bullets.push(bul);
             });
             socket.on("mouse", ([mouseX, mouseY]) => {
                 ply.cameraAngle += (mouseY / 20) * sens;
@@ -249,13 +249,10 @@ class ServerScene {
             );
         }
         for (const bul of this.state.bullets) {
-            bul.position.x = roundToPlaces(bul.physics.position.x, 7);
-            bul.position.y = roundToPlaces(bul.physics.position.y, 7);
-            bul.position.z = roundToPlaces(bul.physics.position.z, 7);
-            bul.rotation.x = roundToPlaces(bul.physics.quaternion.x);
-            bul.rotation.y = roundToPlaces(bul.physics.quaternion.y);
-            bul.rotation.z = roundToPlaces(bul.physics.quaternion.z);
-            bul.rotation.w = roundToPlaces(bul.physics.quaternion.w);
+            bul.position.x += roundToPlaces(bul.dv.x);
+            bul.position.y += roundToPlaces(bul.dv.y);
+            bul.position.z += roundToPlaces(bul.dv.z);
+            console.log(bul.position, bul.dv);
         }
 
         cachedEmit("buld", encodeBulletData(this.state.bullets));

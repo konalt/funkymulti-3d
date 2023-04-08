@@ -150,12 +150,12 @@ function init() {
     }
     function bullet(x, y, z) {
         const c = new THREE.Mesh(
-            new THREE.SphereGeometry(0.2, 8, 8),
+            new THREE.SphereGeometry(0.02, 6, 6),
             new THREE.MeshBasicMaterial({color: 0xffffff})
         );
-        c.x = x;
-        c.y = y;
-        c.z = z;
+        c.position.x = x;
+        c.position.y = y;
+        c.position.z = z;
         scene.add(c);
         return c;
     }
@@ -394,7 +394,9 @@ function init() {
         });
         bullets = [];
         gameState.bullets.forEach((ply) => {
-            bullet(ply.position.x, ply.position.y, ply.position.z);
+            bullets.push(
+                bullet(ply.position.x, ply.position.y, ply.position.z)
+            );
         });
     }
 
@@ -496,7 +498,7 @@ function init() {
             socket.emit("move", movestring);
         }
         if (getKeyDown("mouse1")) {
-            //socket.emit("shoot");
+            socket.emit("shoot");
         }
         if (getKeyDown("space")) {
             socket.emit("jump");
